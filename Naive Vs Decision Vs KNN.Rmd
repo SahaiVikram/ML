@@ -1,0 +1,79 @@
+---
+title: "Hackathon_1"
+output: html_document
+---
+```{r}
+#Descriptive Analysis
+Model<-read.csv("C:/Users/Administrator/Desktop/Data Sets/Model_Data.csv")
+str(Model)
+summary(Model)
+```
+```{r}
+#Data Visualization
+library(corrplot)
+library(ggplot2)
+library(dplyr)
+correlation <- select(Model,c("Age","fnlwgt","edu_no","capital_gain","capital_loss","hrs_per_week"))
+corr_values <- (cor(correlation))
+ggplot(correlation,aes(x=Age,y=fnlwgt))+geom_point()+geom_smooth()
+```
+```{r}
+#Naive Bayes (Accuracy=82.56)
+Model<-read.csv("C:/Users/Administrator/Desktop/Data Sets/Model_Data.csv")
+library(e1071)
+set.seed(58)
+sample=sample.int(n=nrow(Model),size = floor(0.8*nrow(Model)),replace = F)
+
+Model_train=Model[sample,]
+Model_test=Model[-sample,]
+
+model1=naiveBayes(Salary~.,data=Model_train)
+pred=predict(model1,Model_test[,-1])
+
+confmat=table(pred,Model_test$Salary)
+accuracy = (sum(diag(confmat))/sum(confmat))*100
+accuracy
+```
+```{r}
+#Decision Tree (Accuracy=84.79%)
+library(tree)
+Model<-read.csv("C:/Users/Administrator/Desktop/Data Sets/Model_Data.csv")
+model1<-Model[,-14]
+tree.model= tree(Salary~.,data = model1)
+summary(tree.model)
+
+sample=sample.int(n=nrow(Model),size = floor(0.8*nrow(Model)),replace = F)
+model_train<-model1[sample,] #80% train data
+model_test<-model1[-sample,] #20% test data
+
+tree.model= tree(Salary~.,data = model_train)
+plot(tree.model)
+text(tree.model)
+model_prediction=predict(tree.model,model_test)
+
+maxidx=function(arr){
+  return(which(arr==max(arr)))}
+idx=apply(model_prediction,c(1),maxidx)
+modelprediction=c('<=50K','>50K')[idx]
+confmat=table(modelprediction,model_test$Salary) #confusion matrix
+
+accuracy=sum(diag(confmat))/sum(confmat)*100
+accuracy
+```
+```{r}
+#KNN (Accuracy=79.38%)
+Model<-read.csv("C:/Users/Administrator/Desktop/Data Sets/Model_Data.csv")
+library(class)
+model_train_data=Model[1:30700,c(1,3,5,11,12,13)]
+model_test_data=Model[30701:38398,c(1,3,5,11,12,13)]
+model_train_label=Model[1:30700,15]
+model_test_label=Model[30701:38398,15]
+k=10
+
+model_pred_label=knn(train = model_train_data,test = model_test_data,cl=model_train_label,k)
+
+confmat=table(model_test_label,model_pred_label) #confirmatory matrix
+
+accuracy = (sum(diag(confmat))/sum(confmat))*100
+accuracy
+```
